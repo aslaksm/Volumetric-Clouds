@@ -1,23 +1,11 @@
-// Local Headers
-#include "glitter.hpp"
-#include "shader.hpp"
-#include "shapes.hpp"
-#include "glUtils.hpp"
-#include "program.hpp"
-
-// System Headers
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <fmt/format.h>
-#include <iostream>
-#include <ctime>
-
+#include "noise.hpp"
 
 // Generate texture with comp-shader
 
-// int tex_w = 512, tex_h = 512, tex_d = 512;
-// int tex_w = 128, tex_h = 128, tex_d = 128;
-int tex_w = 256, tex_h = 256, tex_d = 256;
+// XXX: Texture size seems to have a big performance impact
+// Related to level of detail?
+int tex_size = 128;
+int tex_w = tex_size, tex_h = tex_size, tex_d = tex_size;
 
 GLuint generateTexture()
 {
@@ -46,14 +34,13 @@ GLuint generateTexture()
   compShader->activate();
 
   srand(time(NULL));
-  for (int i = 0; i < 80; i++) {
-    int x = rand() % 256;
-    int y = rand() % 256;
-    int z = rand() % 256;
+  int low_detail = 128;
+  int med_detail = 256;
+  int high_detail = 512;
 
-    std::cout << fmt::format("x y z are {} {} {}", x,y,z) << std::endl;
-    glUniform3fv(i, 1, glm::value_ptr(glm::vec3(x,y,z)));
-  }
+  generatePoints(compShader, 0, low_detail, "low_detail_points");
+  generatePoints(compShader, 1, med_detail, "med_detail_points");
+  generatePoints(compShader, 2, high_detail, "high_detail_points");
 
   glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, (GLuint)tex_d);
   
@@ -66,4 +53,19 @@ void bindTexture(GLuint tex)
   // XXX: Should this be here?
   glMemoryBarrier(GL_ALL_BARRIER_BITS);
   glBindTextureUnit(0, tex);
+}
+
+
+void generatePoints(Gloom::Shader* shader, int idx, int num_points, std::string name)
+{
+  for (int i = 0; i < num_points; i++) {
+    int x = rand() % tex_size;
+    int y = rand() % tex_size;
+    int z = rand() % tex_size;
+
+    glUniform1i(idx, num_points);
+
+    glUniform3fv(shader->getUniformFromName(fmt::format("{}[{}]", name, i)),
+        1, glm::value_ptr(glm::vec3(x,y,z)));
+  }
 }

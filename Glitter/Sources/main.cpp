@@ -9,11 +9,13 @@
 // System Headers
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <fmt/format.h>
 
 // Standard Headers
 #include <cstdio>
 #include <cstdlib>
 #include <time.h>
+#include <iostream>
 
 int main(int argc, char * argv[]) {
 
@@ -75,6 +77,7 @@ int main(int argc, char * argv[]) {
         // t+= 1.00;
         t+= 0.001;
 
+        std::cout << fmt::format("Time is {}", t) << std::endl;
         glBindVertexArray(cloudsVAO);
         glDrawElements(GL_TRIANGLES, clouds.indices.size(), GL_UNSIGNED_INT, nullptr);
 
