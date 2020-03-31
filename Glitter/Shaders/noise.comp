@@ -1,0 +1,33 @@
+#version 430 core
+
+// Max global work groups : 65535
+// Max local work groups : 1792
+// Max local work group invocations : 1792
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+uniform layout (location = 0) vec3[80] rand_points;
+layout(rgba32f, binding = 0) uniform image3D img_output;
+
+
+void main() {
+  // base pixel colour for image
+  // vec4 pixel = vec4(0.4, 0.0, 0.0, 1.0);
+  // get index in global work group i.e x,y position
+  vec3 texel_coord = gl_GlobalInvocationID.xyz;
+  
+  //
+  // interesting stuff happens here later
+  //
+  
+  // output to a specific pixel in the image
+  
+  float dist = 9999.;
+  for (int i = 0; i < 80; i++)
+  {
+    dist = min(dist, distance(texel_coord, rand_points[i]));
+  }
+
+  // imageStore(img_output, pixel_coords, vec4(1.));
+  // FIXME: Find some way of mapping output values to [0,1] range
+  imageStore(img_output, ivec3(texel_coord), vec4(vec3(1-dist/60.), 1.));
+}
