@@ -19,7 +19,7 @@ uniform vec3[MAX_POINTS] low_detail_points;
 uniform vec3[MAX_POINTS] med_detail_points;
 uniform vec3[MAX_POINTS] high_detail_points;
 
-layout(rgba32f, binding = 0) uniform image3D img_output;
+layout(rgba32f, binding = 1) uniform image3D img_output;
 
 
 // NOISE START
@@ -119,6 +119,9 @@ float snoise(vec3 v)
 
 // NOISE END
 
+float remap(float v, float l0, float h0, float ln, float hn) {
+  return ln + ((v - l0) * (hn - ln))/(h0 - l0);
+}
 
 
 void main() {
@@ -146,23 +149,45 @@ void main() {
   }
 
   // Magic numbers ahoy
-  float low_worley = 1-low_dist/20.;
-  float med_worley = max(0, -0.2 + (1-med_dist*(med_detail/7500.)));
-  float high_worley = max(0, -0.2 + (1-high_dist*(high_detail/7500.)));
+  float low_worley = clamp(1-low_dist/20, 0.0, 1.0);
+  float med_worley = clamp(1-med_dist*(med_detail/7500.), 0.0, 1.0);
+  float high_worley = clamp(1-high_dist*(high_detail/7500.), 0.0, 1.0);
 
-  low_worley = max(0, -0.2 + low_worley/1.2 + snoise(texel_coord/8)/16);
+  // low_worley = max(0, -0.2 + low_worley/1.2 + snoise(texel_coord/8)/16);
   // med_worley += med_worley*snoise(texel_coord/6)/16;
   // high_worley += high_worley*snoise(texel_coord/2)/8;
 
-  // float worley = 0.7 * low_worley +
-  //                0.5 * med_worley +
-  //                0.4 * high_worley;
+  float worley = 0.7 * low_worley +
+                 0.5 * med_worley +
+                 0.4 * high_worley;
   // float low_worley = max(0, -0.2+(1-low_dist/20.)/1.2 + snoise(texel_coord/8)/16.);
   // float color = max(0, 1-dist/20.);
   //
   // float color = med_worley + snoise(texel_coord/6)/16;
 
-  vec4 rgba = vec4(vec3(low_worley, med_worley, high_worley), 1.);
+  // vec4 rgba = vec4(vec3(low_worley, med_worley, high_worley), 1.);
+  //
+  float zero = max(0, snoise(vec3(100)+texel_coord/32)*0.600);
+  float one = max(0, snoise(texel_coord/32)*0.600);
+  float two = max(0, snoise(texel_coord/8.)*0.5);
+  float three = max(0, snoise(texel_coord/4.)*0.25);
+  float four = max(0, snoise(texel_coord)*0.125);
+  float simplex1 = clamp(one+two+three+four, 0.0, 1.0);
+
+  zero = max(0, snoise(vec3(200*low_detail_points[0])+texel_coord/32)*0.600);
+  one = max(0, snoise(vec3(10000.*low_detail_points[0]) + texel_coord/32)*0.600);
+  two = max(0, snoise(vec3(10000.*low_detail_points[0]) + texel_coord/8.)*0.5);
+  three = max(0, snoise(vec3(10000.*low_detail_points[0]) + texel_coord/4.)*0.25);
+  four = max(0, snoise(vec3(10000.*low_detail_points[0]) + texel_coord)*0.125);
+  float simplex2 = clamp(one+two+three+four, 0.0, 1.0);
+
+  float simplex_worley = remap(0.5*(simplex1 + simplex2),
+      -1.0 - low_worley, 1.0, 0.0, 1.0);
+
+  float coverage = max(0, snoise(texel_coord));
+
+  // float simplex_worley = remap(simplex, 1.0 - low_worley, 1.0, 0.0, 1.0);
+  vec4 rgba = vec4(simplex_worley, 1.0, 1.0, 1.0);
 
   // imageStore(img_output, pixel_coords, vec4(1.));
   // FIXME: Find some way of mapping output values to [0,1] range

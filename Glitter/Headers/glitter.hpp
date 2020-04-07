@@ -18,7 +18,11 @@
 #include <stb_image.h>
 
 // Define Some Constants
-const int mWidth = 1280;
-const int mHeight = 800;
+// const int mWidth = 256;
+// const int mHeight = 256;
+// const int mWidth = 1280;
+// const int mHeight = 1024;
+const int mWidth = 1920;
+const int mHeight = 1080;
 
 #endif //~ Glitter Header

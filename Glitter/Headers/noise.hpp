@@ -13,6 +13,8 @@
 #include <iostream>
 #include <ctime>
 
+GLuint generateCoverageAndHeightTexture();
 GLuint generateTexture();
-void bindTexture(GLuint tex);
+GLuint generateDetailTexture();
+void bindTexture(int idx, GLuint tex);
 void generatePoints(Gloom::Shader* shader, int idx, int num_points, std::string name);

@@ -2,18 +2,45 @@
 
 // Generate texture with comp-shader
 
+// XXX: Lower RGBA32F?
 // XXX: Texture size seems to have a big performance impact
 // Related to level of detail?
 int tex_size = 128;
 int tex_w = tex_size, tex_h = tex_size, tex_d = tex_size;
 
-GLuint generateTexture()
+GLuint generateCoverageAndHeightTexture()
 {
-
-
   GLuint tex_output;
   glGenTextures(1, &tex_output);
   glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, tex_output);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, tex_w, tex_h, 0, GL_RGBA, GL_FLOAT, NULL);
+  glBindImageTexture(0, tex_output, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
+  Gloom::Shader* compShader;
+  compShader = new Gloom::Shader();
+  compShader->attach("../Glitter/Shaders/coverage.comp");
+  compShader->link();
+  compShader->activate();
+
+  glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, (GLuint)1);
+  
+  return tex_output;
+
+}
+
+GLuint generateTexture()
+{
+  GLuint tex_output;
+  glGenTextures(1, &tex_output);
+  glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_3D, tex_output);
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
@@ -25,7 +52,7 @@ GLuint generateTexture()
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, tex_w, tex_h, tex_d, 0, GL_RGBA, GL_FLOAT,
    NULL);
-  glBindImageTexture(0, tex_output, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+  glBindImageTexture(1, tex_output, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
   Gloom::Shader* compShader;
   compShader = new Gloom::Shader();
@@ -47,12 +74,37 @@ GLuint generateTexture()
   return tex_output;
 }
 
-
-void bindTexture(GLuint tex)
+GLuint generateDetailTexture()
 {
-  // XXX: Should this be here?
+  GLuint tex_output;
+  glGenTextures(1, &tex_output);
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_3D, tex_output);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_MIRRORED_REPEAT);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, 32, 32, 32, 0, GL_RGBA, GL_FLOAT,
+   NULL);
+  glBindImageTexture(2, tex_output, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
+  Gloom::Shader* compShader;
+  compShader = new Gloom::Shader();
+  compShader->attach("../Glitter/Shaders/high_res.comp");
+  compShader->link();
+  compShader->activate();
+
+  glDispatchCompute((GLuint)32, (GLuint)32, (GLuint)32);
+  
+  return tex_output;
+}
+
+
+void bindTexture(int idx, GLuint tex)
+{
   glMemoryBarrier(GL_ALL_BARRIER_BITS);
-  glBindTextureUnit(0, tex);
+  glBindTextureUnit(idx, tex);
 }
 
 
