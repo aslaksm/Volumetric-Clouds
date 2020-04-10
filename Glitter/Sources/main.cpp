@@ -61,10 +61,10 @@ int main(int argc, char * argv[]) {
 
     GLuint covID = generateCoverageAndHeightTexture();
     GLuint texID = generateTexture();
-    GLuint detID = generateDetailTexture();
+    // GLuint detID = generateDetailTexture();
     bindTexture(0, covID);
     bindTexture(1, texID);
-    bindTexture(2, detID);
+    // bindTexture(2, detID);
 
     Gloom::Shader* bgShader;
     bgShader = new Gloom::Shader();
@@ -85,11 +85,11 @@ int main(int argc, char * argv[]) {
     float t = 0.0;
 
     float x = 0.0;
-    float y = -10000.0;
-    float z = 10000.0;
+    float y = 0.0;
+    float z = 0.0;
     float dist = 0.0;
     float look_x = 0.0;
-    float look_y = 0.6;
+    float look_y = 0.0;
     float step1 = 1.0;
     float step2 = 1.0;
     int num_steps = 5;
@@ -152,14 +152,14 @@ int main(int argc, char * argv[]) {
           look_y = 1.0;
         }
 
-        ImGui::SliderFloat("X", &x, -1000000.0f, 1000000.0f);
-        ImGui::SliderFloat("Y", &y, -1000000.0f, 1000000.0f);
-        ImGui::SliderFloat("Z", &z, -1000000.0f, 1000000.0f);
+        ImGui::SliderFloat("X", &x, -1000.0f, 1000.0f);
+        ImGui::SliderFloat("Y", &y, -1000.0f, 2000.0f);
+        ImGui::SliderFloat("Z", &z, -1000.0f, 1000.0f);
         ImGui::SliderFloat("Distance", &dist, 0.0f, 1000.0f);
         ImGui::SliderFloat("Look x", &look_x, -1.0f, 1.0f);
         ImGui::SliderFloat("Look y", &look_y, -1.0f, 1.0f);
-        ImGui::SliderFloat("Step 1", &step1, 0.0f, 10.0f);
-        ImGui::SliderFloat("Step 2", &step2, 0.0f, 100000.0f);
+        ImGui::SliderFloat("Step 1", &step1, 0.0f, 3.0f);
+        ImGui::SliderFloat("Step 2", &step2, 0.0f, 2.0f);
         ImGui::SliderInt("Num steps", &num_steps, 1, 100);
         ImGui::End();
 

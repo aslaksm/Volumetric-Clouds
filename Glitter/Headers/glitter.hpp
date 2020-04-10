@@ -20,9 +20,9 @@
 // Define Some Constants
 // const int mWidth = 256;
 // const int mHeight = 256;
-// const int mWidth = 1280;
-// const int mHeight = 1024;
-const int mWidth = 1920;
-const int mHeight = 1080;
+const int mWidth = 1280;
+const int mHeight = 1024;
+// const int mWidth = 1920;
+// const int mHeight = 1080;
 
 #endif //~ Glitter Header

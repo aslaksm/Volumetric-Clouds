@@ -43,6 +43,12 @@ float cnoise(vec2 P){
   return 2.3 * n_xy;
 }
 
+float circle(vec2 point, vec2 center, float radius) {
+  if ((length(point - center) - radius) < 0.0)
+    return 1.0;
+  return 0.0;
+}
+
 float remap(float v, float l0, float h0, float ln, float hn) {
   return ln + ((v - l0) * (hn - ln))/(h0 - l0);
 }
@@ -62,4 +68,5 @@ void main() {
   // else n = remap(n, 0.0, 0.95, 0.0, 1.0);
 
   imageStore(img_output, ivec2(pixel_coord), vec4(vec3(n), 1.0));
+  // imageStore(img_output, ivec2(pixel_coord), vec4(vec3(circle(pixel_coord, vec2(63,63), 30.)), 1.0));
 }

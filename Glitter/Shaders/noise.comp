@@ -182,7 +182,8 @@ void main() {
   float simplex2 = clamp(one+two+three+four, 0.0, 1.0);
 
   float simplex_worley = remap(0.5*(simplex1 + simplex2),
-      -1.0 - low_worley, 1.0, 0.0, 1.0);
+      0.3 - low_worley, 1.0, 0.0, 1.0);
+  // float simplex_worley = 0.4*(simplex1 + simplex2);
 
   float coverage = max(0, snoise(texel_coord));
 
