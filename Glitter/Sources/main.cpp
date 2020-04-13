@@ -61,22 +61,20 @@ int main(int argc, char * argv[]) {
 
     GLuint covID = generateCoverageAndHeightTexture();
     GLuint texID = generateTexture();
-    // GLuint detID = generateDetailTexture();
+    GLuint detID = generateDetailTexture();
     bindTexture(0, covID);
     bindTexture(1, texID);
-    // bindTexture(2, detID);
+    bindTexture(2, detID);
 
+    // FIXME: We don't need a separate shader for this, unless we're doing atmospheric stuff
     Gloom::Shader* bgShader;
     bgShader = new Gloom::Shader();
     bgShader->makeBasicShader("../Glitter/Shaders/shader.vert", "../Glitter/Shaders/bg.frag");
-    // shader->activate();
 
     Gloom::Shader* shader;
     shader = new Gloom::Shader();
     shader->makeBasicShader("../Glitter/Shaders/shader.vert", "../Glitter/Shaders/shader.frag");
-    // shader->activate();
 
-    // Mesh clouds = plane(glm::vec3(0.6, 0.6, 1.0));
     Mesh clouds = plane(glm::vec3(1.0, 1.0, 1.0));
     unsigned int cloudsVAO = generateBuffer(clouds);
     glBindVertexArray(cloudsVAO);
@@ -87,12 +85,13 @@ int main(int argc, char * argv[]) {
     float x = 0.0;
     float y = 0.0;
     float z = 0.0;
-    float dist = 0.0;
-    float look_x = 0.0;
+    float height = 3400.0;
+    bool coverage_only = false;
     float look_y = 0.0;
-    float step1 = 1.0;
-    float step2 = 1.0;
+    float trans = 1.0;
+    float scat = 1.0;
     int num_steps = 5;
+    float light_step_size = 100.f;
 
     float pass_time = false;
 
@@ -119,11 +118,13 @@ int main(int argc, char * argv[]) {
         glUniform2fv(4, 1, glm::value_ptr(glm::vec2(windowWidth, windowHeight)));
         glUniform1f(5, t);
         glUniform3fv(6, 1, glm::value_ptr(glm::vec3(x,y,z)));
-        glUniform1f(7, dist);
-        glUniform2fv(8, 1, glm::value_ptr(glm::vec2(look_x, look_y)));
-        glUniform2fv(9, 1, glm::value_ptr(glm::vec2(step1, step2)));
-        glUniform1i(10, num_steps);
-        // t+= 0.01;
+        glUniform1f(7, height);
+        glUniform1i(8, coverage_only);
+        glUniform1f(9, trans);
+        glUniform1f(10, scat);
+        glUniform1i(11, num_steps);
+        glUniform1f(12, light_step_size);
+
         glDrawElements(GL_TRIANGLES, clouds.indices.size(), GL_UNSIGNED_INT, nullptr);
 
 
@@ -133,34 +134,22 @@ int main(int argc, char * argv[]) {
         ImGui::NewFrame();
 
         if (pass_time) t += 0.01;
-        // render GUI
+        // Define GUI
         ImGui::Begin("Demo window");
         if (ImGui::Button("Time"))
         {
           pass_time = !pass_time;
         }
 
-        if (ImGui::Button("Over"))
-        {
-          y = 100.0;
-          look_y = -1.0;
-        }
-
-        if (ImGui::Button("Under"))
-        {
-          y = -100.0;
-          look_y = 1.0;
-        }
-
         ImGui::SliderFloat("X", &x, -1000.0f, 1000.0f);
-        ImGui::SliderFloat("Y", &y, -1000.0f, 2000.0f);
+        ImGui::SliderFloat("Y", &y, -10000.0f, 10000.0f);
         ImGui::SliderFloat("Z", &z, -1000.0f, 1000.0f);
-        ImGui::SliderFloat("Distance", &dist, 0.0f, 1000.0f);
-        ImGui::SliderFloat("Look x", &look_x, -1.0f, 1.0f);
-        ImGui::SliderFloat("Look y", &look_y, -1.0f, 1.0f);
-        ImGui::SliderFloat("Step 1", &step1, 0.0f, 3.0f);
-        ImGui::SliderFloat("Step 2", &step2, 0.0f, 2.0f);
+        ImGui::SliderFloat("Max Height", &height, 0.0f, 10000.0f);
+        ImGui::Checkbox("Coverage only", &coverage_only);
+        ImGui::SliderFloat("Transmittance", &trans, 0.0f, 2.0f);
+        ImGui::SliderFloat("Scattering", &scat, 0.0f, 2.0f);
         ImGui::SliderInt("Num steps", &num_steps, 1, 100);
+        ImGui::SliderFloat("Lightmarch step size", &light_step_size, 5.f, 500.f);
         ImGui::End();
 
         // Render imgui into screen

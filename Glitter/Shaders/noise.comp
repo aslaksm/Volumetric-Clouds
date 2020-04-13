@@ -4,20 +4,9 @@
 // Max local work groups : 1792
 // Max local work group invocations : 1792
 
-// Crashes for high values (9999). System limit?
-#define MAX_POINTS 1024
-
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-
-// Total points for each level of worley fidelity
-uniform layout (location = 0) int low_detail;
-uniform layout (location = 1) int med_detail;
-uniform layout (location = 2) int high_detail;
-
-uniform vec3[MAX_POINTS] low_detail_points;
-uniform vec3[MAX_POINTS] med_detail_points;
-uniform vec3[MAX_POINTS] high_detail_points;
+uniform layout (location = 0) vec3 resolution;
 
 layout(rgba32f, binding = 1) uniform image3D img_output;
 
@@ -34,7 +23,7 @@ vec4 mod289(vec4 x) {
 }
 
 vec4 permute(vec4 x) {
-     return mod289(((x*34.0)+1.0)*x);
+  return mod289(((x*34.0)+1.0)*x);
 }
 
 vec4 taylorInvSqrt(vec4 r)
@@ -43,15 +32,15 @@ vec4 taylorInvSqrt(vec4 r)
 }
 
 float snoise(vec3 v)
-  { 
+{ 
   const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
   const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
 
-// First corner
+  // First corner
   vec3 i  = floor(v + dot(v, C.yyy) );
   vec3 x0 =   v - i + dot(i, C.xxx) ;
 
-// Other corners
+  // Other corners
   vec3 g = step(x0.yzx, x0.xyz);
   vec3 l = 1.0 - g;
   vec3 i1 = min( g.xyz, l.zxy );
@@ -65,15 +54,15 @@ float snoise(vec3 v)
   vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y
   vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y
 
-// Permutations
+  // Permutations
   i = mod289(i); 
   vec4 p = permute( permute( permute( 
-             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
-           + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) 
-           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
+          i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
+        + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) 
+      + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
 
-// Gradients: 7x7 points over a square, mapped onto an octahedron.
-// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)
+  // Gradients: 7x7 points over a square, mapped onto an octahedron.
+  // The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)
   float n_ = 0.142857142857; // 1.0/7.0
   vec3  ns = n_ * D.wyz - D.xzx;
 
@@ -103,18 +92,18 @@ float snoise(vec3 v)
   vec3 p2 = vec3(a1.xy,h.z);
   vec3 p3 = vec3(a1.zw,h.w);
 
-//Normalise gradients
+  //Normalise gradients
   vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
   p0 *= norm.x;
   p1 *= norm.y;
   p2 *= norm.z;
   p3 *= norm.w;
 
-// Mix final noise value
+  // Mix final noise value
   vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
   m = m * m;
   return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), 
-                                dot(p2,x2), dot(p3,x3) ) );
+        dot(p2,x2), dot(p3,x3) ) );
 }
 
 // NOISE END
@@ -124,73 +113,81 @@ float remap(float v, float l0, float h0, float ln, float hn) {
 }
 
 
+vec3 random3( vec3 p ) {
+  return fract(sin(vec3(dot(p,vec3(127.1,311.7, 253.74)),dot(p,vec3(93.98, 269.5,183.3)), dot(p, vec3(203.68, 285.88, 126.49))))*43758.5453);
+}
+
+
+// Kudos to The Book of Shaders
+float worley(int cells, vec3 uvw, int level) {
+  uvw *= cells;
+
+  // Tile the space
+  vec3 i_st = floor(uvw);
+  vec3 f_st = fract(uvw);
+
+  float m_dist = 1.0;
+
+  for (int z= -1; z <= 1; z++) {
+    for (int y= -1; y <= 1; y++) {
+      for (int x= -1; x <= 1; x++) {
+
+        // Neighbor place in the grid
+        vec3 neighbor = vec3(float(x),float(y), float(z));
+
+        // Random position from current + neighbor place in the grid
+        // Mod to make it tileable
+        vec3 pos = mod(i_st + neighbor, cells);
+
+        vec3 point = random3(pos);
+
+        // Vector between the pixel and the point
+        vec3 diff = neighbor + point - f_st;
+
+        // Distance to the point
+        float dist = length(diff);
+
+        // Keep the closer distance
+        m_dist = min(m_dist, dist);
+      }
+    }
+  }
+
+  // Invert the noise
+  m_dist = 1. - m_dist;
+
+  return m_dist;
+}
+
 void main() {
-  vec3 texel_coord = gl_GlobalInvocationID.xyz;
+  vec3 texel = gl_GlobalInvocationID.xyz;
+  vec3 uvw = texel/resolution.xyz;
+
+
+  // Invert the noise
+  float m_dist = worley(9, uvw, 1);
+  float m_dist1 = worley(27, uvw, 1);
+
+
+  vec4 color = vec4(0.);
+
+  float one = (9/14.) * max(0, snoise(uvw));
+  float two = (6/14.) * max(0, snoise(uvw*2));
+  float three = (4/14.) * max(0, snoise(uvw*4));
+  float four = (3/14.) *max(0, snoise(uvw*8));
+  float five = (3/28.) *max(0, snoise(uvw*32));
+  float six = (3/56.) *max(0, snoise(uvw*64));
+  float seven = (1/104.) *max(0, snoise(uvw*128));
+  float simplex = clamp(one+two+three+four+five+six+seven, 0.0, 1.0);
+
   
-  float low_dist = 9999.;
-  for (int i = 0; i < MAX_POINTS; i++)
-  {
-    if (i == low_detail) break;
-    low_dist = min(low_dist, distance(texel_coord, low_detail_points[i]));
-  }
+  // color += simplex*m_dist;
+  color.r = remap(simplex, -(m_dist+m_dist1)*0.5, 1.0, 0.0 ,1.0);
 
-  float med_dist = 9999.;
-  for (int i = 0; i < MAX_POINTS; i++)
-  {
-    if (i == med_detail) break;
-    med_dist = min(med_dist, distance(texel_coord, med_detail_points[i]));
-  }
+  // TODO: fbm worleys
+  color.g = worley(9, uvw, 1);
+  color.b = worley(18, uvw, 1);
+  color.a = worley(27, uvw, 1);
 
-  float high_dist = 9999.;
-  for (int i = 0; i < MAX_POINTS; i++)
-  {
-    if (i == high_detail) break;
-    high_dist = min(high_dist, distance(texel_coord, high_detail_points[i]));
-  }
-
-  // Magic numbers ahoy
-  float low_worley = clamp(1-low_dist/20, 0.0, 1.0);
-  float med_worley = clamp(1-med_dist*(med_detail/7500.), 0.0, 1.0);
-  float high_worley = clamp(1-high_dist*(high_detail/7500.), 0.0, 1.0);
-
-  // low_worley = max(0, -0.2 + low_worley/1.2 + snoise(texel_coord/8)/16);
-  // med_worley += med_worley*snoise(texel_coord/6)/16;
-  // high_worley += high_worley*snoise(texel_coord/2)/8;
-
-  float worley = 0.7 * low_worley +
-                 0.5 * med_worley +
-                 0.4 * high_worley;
-  // float low_worley = max(0, -0.2+(1-low_dist/20.)/1.2 + snoise(texel_coord/8)/16.);
-  // float color = max(0, 1-dist/20.);
-  //
-  // float color = med_worley + snoise(texel_coord/6)/16;
-
-  // vec4 rgba = vec4(vec3(low_worley, med_worley, high_worley), 1.);
-  //
-  float zero = max(0, snoise(vec3(100)+texel_coord/32)*0.600);
-  float one = max(0, snoise(texel_coord/32)*0.600);
-  float two = max(0, snoise(texel_coord/8.)*0.5);
-  float three = max(0, snoise(texel_coord/4.)*0.25);
-  float four = max(0, snoise(texel_coord)*0.125);
-  float simplex1 = clamp(one+two+three+four, 0.0, 1.0);
-
-  zero = max(0, snoise(vec3(200*low_detail_points[0])+texel_coord/32)*0.600);
-  one = max(0, snoise(vec3(10000.*low_detail_points[0]) + texel_coord/32)*0.600);
-  two = max(0, snoise(vec3(10000.*low_detail_points[0]) + texel_coord/8.)*0.5);
-  three = max(0, snoise(vec3(10000.*low_detail_points[0]) + texel_coord/4.)*0.25);
-  four = max(0, snoise(vec3(10000.*low_detail_points[0]) + texel_coord)*0.125);
-  float simplex2 = clamp(one+two+three+four, 0.0, 1.0);
-
-  float simplex_worley = remap(0.5*(simplex1 + simplex2),
-      0.3 - low_worley, 1.0, 0.0, 1.0);
-  // float simplex_worley = 0.4*(simplex1 + simplex2);
-
-  float coverage = max(0, snoise(texel_coord));
-
-  // float simplex_worley = remap(simplex, 1.0 - low_worley, 1.0, 0.0, 1.0);
-  vec4 rgba = vec4(simplex_worley, 1.0, 1.0, 1.0);
-
-  // imageStore(img_output, pixel_coords, vec4(1.));
-  // FIXME: Find some way of mapping output values to [0,1] range
-  imageStore(img_output, ivec3(texel_coord), rgba);
+  imageStore(img_output, ivec3(texel), color);
 }

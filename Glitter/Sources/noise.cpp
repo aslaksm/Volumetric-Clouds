@@ -1,13 +1,13 @@
 #include "noise.hpp"
 
-// Generate texture with comp-shader
+// Generate textures with comp-shader
 
-// XXX: Lower RGBA32F?
-// XXX: Texture size seems to have a big performance impact
-// Related to level of detail?
+// XXX: RGBA16F? Is there any performance difference
 int tex_size = 128;
+int detail_size = 32;
 int tex_w = tex_size, tex_h = tex_size, tex_d = tex_size;
 
+// 128^2 RGBA coverage texture
 GLuint generateCoverageAndHeightTexture()
 {
   GLuint tex_output;
@@ -31,27 +31,28 @@ GLuint generateCoverageAndHeightTexture()
   compShader->activate();
 
   glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, (GLuint)1);
-  
+
   return tex_output;
 
 }
 
+// 128^3 RGBA main texure
 GLuint generateTexture()
 {
   GLuint tex_output;
   glGenTextures(1, &tex_output);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_3D, tex_output);
-  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_MIRRORED_REPEAT);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
   // glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   // glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   // glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, tex_w, tex_h, tex_d, 0, GL_RGBA, GL_FLOAT,
-   NULL);
+      NULL);
   glBindImageTexture(1, tex_output, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
   Gloom::Shader* compShader;
@@ -60,33 +61,27 @@ GLuint generateTexture()
   compShader->link();
   compShader->activate();
 
-  srand(time(NULL));
-  int low_detail = 128;
-  int med_detail = 256;
-  int high_detail = 512;
-
-  generatePoints(compShader, 0, low_detail, "low_detail_points");
-  generatePoints(compShader, 1, med_detail, "med_detail_points");
-  generatePoints(compShader, 2, high_detail, "high_detail_points");
+  glUniform3fv(0, 1, glm::value_ptr(glm::vec3(tex_size)));
 
   glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, (GLuint)tex_d);
-  
+
   return tex_output;
 }
 
+// 32^3 RGB(A) texture of FBM Worleys
 GLuint generateDetailTexture()
 {
   GLuint tex_output;
   glGenTextures(1, &tex_output);
   glActiveTexture(GL_TEXTURE2);
   glBindTexture(GL_TEXTURE_3D, tex_output);
-  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_MIRRORED_REPEAT);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, 32, 32, 32, 0, GL_RGBA, GL_FLOAT,
-   NULL);
+  glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, detail_size, detail_size, detail_size, 0, GL_RGBA, GL_FLOAT,
+      NULL);
   glBindImageTexture(2, tex_output, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
   Gloom::Shader* compShader;
@@ -95,8 +90,10 @@ GLuint generateDetailTexture()
   compShader->link();
   compShader->activate();
 
-  glDispatchCompute((GLuint)32, (GLuint)32, (GLuint)32);
-  
+  glUniform3fv(0, 1, glm::value_ptr(glm::vec3(detail_size)));
+
+  glDispatchCompute((GLuint)detail_size, (GLuint)detail_size, (GLuint)detail_size);
+
   return tex_output;
 }
 
@@ -105,19 +102,4 @@ void bindTexture(int idx, GLuint tex)
 {
   glMemoryBarrier(GL_ALL_BARRIER_BITS);
   glBindTextureUnit(idx, tex);
-}
-
-
-void generatePoints(Gloom::Shader* shader, int idx, int num_points, std::string name)
-{
-  for (int i = 0; i < num_points; i++) {
-    int x = rand() % tex_size;
-    int y = rand() % tex_size;
-    int z = rand() % tex_size;
-
-    glUniform1i(idx, num_points);
-
-    glUniform3fv(shader->getUniformFromName(fmt::format("{}[{}]", name, i)),
-        1, glm::value_ptr(glm::vec3(x,y,z)));
-  }
 }

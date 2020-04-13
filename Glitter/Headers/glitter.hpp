@@ -18,10 +18,12 @@
 #include <stb_image.h>
 
 // Define Some Constants
-// const int mWidth = 256;
-// const int mHeight = 256;
-const int mWidth = 1280;
-const int mHeight = 1024;
+const int mWidth = 512;
+const int mHeight = 512;
+// const int mWidth = 640;
+// const int mHeight = 480;
+// const int mWidth = 1280;
+// const int mHeight = 720;
 // const int mWidth = 1920;
 // const int mHeight = 1080;
 
