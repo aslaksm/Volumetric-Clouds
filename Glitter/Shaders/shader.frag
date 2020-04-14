@@ -86,18 +86,16 @@ float stratus_function(float height) {
   return min(smoothstep(0.0, 0.1, height), smoothstep(0.2, 0.1, height));
 }
 
-//
-
 
 float get_sample(vec3 p){
   float x = remap(p.x, -SCALE_BASE/2, SCALE_BASE/2, 0.0, 1.0);
   float y = remap(p.y, -SCALE_BASE/2, SCALE_BASE/2, 0.0, 1.0);
   float z = remap(p.z, -SCALE_BASE/2, SCALE_BASE/2, 0.0, 1.0);
 
-  vec4 n = texture(noise, fract(vec3(x, y, z)));
+  vec4 n = texture(noise, vec3(x, y, z));
 
   float fbm = n.g * 0.625 + n.b * .25 + n.a * 0.125;
-  float base_cloud = remap(n.r, - (1.0 - fbm), 1.0, 0.0, 1.0);
+  float base_cloud = remap(n.r, -fbm, 1.0, 0.0, 1.0);
 
   return base_cloud;
 }
@@ -107,7 +105,7 @@ float get_detail_sample(vec3 p) {
   float y = remap(p.y, -SCALE_DETAIL/2, SCALE_DETAIL/2, 0.0, 1.0);
   float z = remap(p.z, -SCALE_DETAIL/2, SCALE_DETAIL/2, 0.0, 1.0);
 
-  vec4 d = texture(detail, fract(vec3(x,y,z)));
+  vec4 d = texture(detail, vec3(x,y,z));
 
   float height_fraction = get_height_fraction(p);
   float hd_fbm = d.r * 0.625 + d.g * .25 + d.b * 0.125;
@@ -125,13 +123,15 @@ float get_coverage(vec3 p) {
 }
 
 
-bool expensive = true;
+bool expensive = false;
 
 
 // FIXME: Final cloud density is not between 0.0 and 1.0. Why??
 float sample_clouds(vec3 p){
   if (p.z > RENDER_DIST) return 0;
   // p = p + vec3(0, 0, time*10000);
+
+  // p = mod(p, 50000);
 
   float cov = get_coverage(p);
 
@@ -141,8 +141,8 @@ float sample_clouds(vec3 p){
 
   float base_cloud_with_height = base_cloud;
   // float base_cloud_with_height = base_cloud*cumulus_function(get_height_fraction(p));
-  float base_cloud_with_cov = remap(base_cloud_with_height, cov, 1.0, 0.0, 1.0);
-  base_cloud_with_cov *= cov;
+  // float base_cloud_with_cov = remap(base_cloud_with_height, cov, 1.0, 0.0, 1.0);
+  float base_cloud_with_cov = base_cloud;
 
   base_cloud_with_cov = clamp(base_cloud_with_cov, 0.0, 1.0);
 
@@ -233,19 +233,19 @@ vec4 trace(vec3 origin, vec3 direction) {
         float lightSamples = lightmarch(p, sun_dir);
         float dT = beer(density * STEP_SIZE/(100*trans));
 
-        inScattering = 1;
         float forward_scattering = henyey_greenstein(p, p-sun_dir, 0.2);
 
         T *= dT;
         lightEnergy *= (beer(lightSamples)) * forward_scattering * inScattering / scat;
       }
     }
-  color += 0.3;
-  color += lightEnergy;
+  // Ambient light
+  // color += 0.6;
+  color += T;
   // lightEnergy += forward_scattering * (STEP_SIZE / (end_dist - start_dist));
   // color += T;
   // TODO: Better alpha blending?
-  return vec4(color*vec3(0.9, 0.95, 1.0), 1.0 - T*3);
+  return vec4(color*vec3(0.9, 0.95, 1.0), 1.0 - T);
   // return vec4(lightEnergy * vec3(1.0, 1.0, 1.0), 1.0);
 }
 
@@ -293,7 +293,7 @@ void main() {
    
   vec3 orig=vec3(0.0,0.0,0.0);
   // vec3 look_at=vec3(sin(time), 0.2 + cos(time)/8, 1.0);
-  vec3 look_at=vec3(0.0, 0.1, 1.0);
+  vec3 look_at=vec3(0.0, 0.4, 1.0);
   float zoom=1.0;
 
   vec3 direction = getdir(uv, orig, look_at, zoom); 
@@ -318,6 +318,6 @@ void main() {
 
 
   // Visualize textures
-  // color = vec4(vec3(sample_clouds(vec3(gl_FragCoord.x, time*100, gl_FragCoord.y))), 1);
+   // color = vec4(vec3(sample_clouds(vec3(gl_FragCoord.x, time*100, gl_FragCoord.y))), 1);
   // color = vec4(vec3(get_sample(vec3(gl_FragCoord.x, gl_FragCoord.y, time*100))), 1);
  }

@@ -57,17 +57,18 @@ float remap(float v, float l0, float h0, float ln, float hn) {
 void main() {
   vec2 pixel_coord = gl_GlobalInvocationID.xy;
   
-  // vec4 rgba = vec4(1.0, 0.2, 0.0, 1.0);
-  // imageStore(img_output, ivec2(pixel_coord), rgba);
-  float one = max(0, cnoise(pixel_coord/32)*0.600);
-  float two = max(0, cnoise(pixel_coord/8.)*0.5);
-  float three = max(0, cnoise(pixel_coord/4.)*0.25);
-  float four = max(0, cnoise(pixel_coord)*0.125);
-  float simplex1 = clamp(one+two+three+four, 0.0, 1.0);
-  float n = simplex1;
+  vec4 rgba = vec4(1.0, 0.2, 0.0, 1.0);
+  imageStore(img_output, ivec2(pixel_coord), rgba);
+  
+  // float one = max(0, cnoise(pixel_coord/32)*0.600);
+  // float two = max(0, cnoise(pixel_coord/8.)*0.5);
+  // float three = max(0, cnoise(pixel_coord/4.)*0.25);
+  // float four = max(0, cnoise(pixel_coord)*0.125);
+  // float simplex1 = clamp(one+two+three+four, 0.0, 1.0);
+  // float n = simplex1;
   // if (n > 0.95) n = 0.0;
   // else n = remap(n, 0.0, 0.95, 0.0, 1.0);
 
-  imageStore(img_output, ivec2(pixel_coord), vec4(vec3(n), 1.0)) ;
+  // imageStore(img_output, ivec2(pixel_coord), vec4(vec3(n), 1.0)) ;
   // imageStore(img_output, ivec2(pixel_coord), vec4(vec3(circle(pixel_coord, vec2(63,63), 30.)), 1.0));
 }
