@@ -10,6 +10,7 @@ uniform layout (location = 10) float scat;
 uniform layout (location = 11) int num_steps_in;
 uniform layout (location = 12) float light_step_size;
 uniform layout (location = 13) vec3 scale_in;
+uniform layout (location = 14) vec2 mouse;
 
 layout(binding = 0) uniform sampler2D coverage;
 layout(binding = 1) uniform sampler3D noise;
@@ -321,6 +322,20 @@ vec4 terrain_march(vec3 origin, vec3 direction) {
   return vec4(0);
 }
 
+mat3 rotate(float x, float y) {
+  mat3 x_mat;
+  x_mat[0] = vec3(1.0, 0.0, 0.0);
+  x_mat[1] = vec3(0.0, cos(-y), sin(-y));
+  x_mat[2] = vec3(0.0, -sin(-y), cos(-y));
+
+  mat3 y_mat;
+  y_mat[0] = vec3(cos(-x), 0.0, -sin(-x));
+  y_mat[1] = vec3(0.0, 1.0, 0.0);
+  y_mat[2] = vec3(sin(-x), 0.0, cos(-x));
+  return x_mat*y_mat;
+
+}
+
 void main() {
 
   vec2 uv=gl_FragCoord.xy/resolution.xy;
@@ -331,7 +346,8 @@ void main() {
 
   vec3 orig=vec3(0.0,0.0,0.0);
   // vec3 look_at=vec3(sin(time), -0.1 + cos(time)/8, 1.0);
-  vec3 look_at=vec3(0.0, 0.0 , -1.0);
+  vec3 look_at=vec3(0.0, 0.0, 1.0);
+  look_at *= rotate(mouse.x, mouse.y);
   float zoom=1.0;
 
   vec3 direction = getdir(uv, orig, look_at, zoom); 

@@ -21,6 +21,29 @@
 #include <time.h>
 #include <iostream>
 
+
+double mouseSensitivity = 1.0;
+double lastMouseX = mWidth / 2;
+double lastMouseY = mHeight / 2;
+float X = 0.0;
+float Y = 0.0;
+void mouseCallback(GLFWwindow* window, double x, double y) {
+    int windowWidth, windowHeight;
+    glfwGetWindowSize(window, &windowWidth, &windowHeight);
+    glViewport(0, 0, windowWidth, windowHeight);
+
+    double deltaX = x - lastMouseX;
+    double deltaY = y - lastMouseY;
+    X += deltaX/1000;
+    Y += deltaY/1000;
+
+    glfwSetCursorPos(window, windowWidth / 2, windowHeight / 2);
+}
+
+
+
+
+
 int main(int argc, char * argv[]) {
 
     // Load GLFW and Create a Window
@@ -83,13 +106,13 @@ int main(int argc, char * argv[]) {
     float t = 0.0;
 
     float x = 0.0;
-    float y = -20000.0;
+    float y = 0.0;
     float z = 0.0;
     float height = 10000.0;
     bool coverage_only = false;
     float look_y = 0.0;
     float trans = 1.0;
-    float scat = 1.0;
+    float scat = 0.11;
     int num_steps = 20;
     float light_step_size = 100.f;
     
@@ -99,21 +122,53 @@ int main(int argc, char * argv[]) {
 
     float pass_time = false;
 
+    bool menu_mode = false;
+
+
+    glfwSetCursorPosCallback(mWindow, mouseCallback);
+    glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
 
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
         if (glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(mWindow, true);
 
-        // int xpos, ypos;
-        // glfwGetCursorPos(mWindow, &xpos, &ypos);
-        // glfwSetCursorPos(mWindow, 1024/2, 768/2);
+        if (glfwGetKey(mWindow, GLFW_KEY_M) == GLFW_PRESS)
+            menu_mode = !menu_mode;
+        if (glfwGetKey(mWindow, GLFW_KEY_E) == GLFW_PRESS)
+            y += 100;
+        if (glfwGetKey(mWindow, GLFW_KEY_Q) == GLFW_PRESS)
+            y -= 100;
+        if (glfwGetKey(mWindow, GLFW_KEY_A) == GLFW_PRESS)
+            x -= 100;
+        if (glfwGetKey(mWindow, GLFW_KEY_D) == GLFW_PRESS)
+            x += 100;
+        if (glfwGetKey(mWindow, GLFW_KEY_W) == GLFW_PRESS)
+            z += 100;
+        if (glfwGetKey(mWindow, GLFW_KEY_S) == GLFW_PRESS)
+            z -= 100;
+
+        if (menu_mode)
+        {
+          glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+          glfwSetCursorPosCallback(mWindow, NULL);
+        }
+        else
+        {
+          glfwSetCursorPosCallback(mWindow, mouseCallback);
+          glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
 
 
         // Set viewport and get resolution
         int windowWidth, windowHeight;
         glfwGetWindowSize(mWindow, &windowWidth, &windowHeight);
         glViewport(0, 0, windowWidth, windowHeight);
+
+        lastMouseX = windowWidth / 2;
+        lastMouseY = windowHeight / 2;
+
 
         // Background Color
         glClear(GL_COLOR_BUFFER_BIT);
@@ -134,6 +189,7 @@ int main(int argc, char * argv[]) {
         glUniform1i(11, num_steps);
         glUniform1f(12, light_step_size);
         glUniform3fv(13, 1, glm::value_ptr(glm::vec3(scale_cov, scale_base, scale_detail)));
+        glUniform2fv(14, 1, glm::value_ptr(glm::vec2(X, Y)));
 
         glDrawElements(GL_TRIANGLES, clouds.indices.size(), GL_UNSIGNED_INT, nullptr);
 
