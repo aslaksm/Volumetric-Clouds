@@ -2,7 +2,6 @@
 
 // Generate textures with comp-shader
 
-// XXX: RGBA16F? Is there any performance difference
 int tex_size = 128;
 int detail_size = 32;
 int tex_w = tex_size, tex_h = tex_size, tex_d = tex_size;
@@ -21,8 +20,8 @@ GLuint generateCoverageAndHeightTexture()
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, tex_w, tex_h, 0, GL_RGBA, GL_FLOAT, NULL);
-  glBindImageTexture(0, tex_output, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_w, tex_h, 0, GL_RGBA, GL_FLOAT, NULL);
+  glBindImageTexture(0, tex_output, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 
   Gloom::Shader* compShader;
   compShader = new Gloom::Shader();
@@ -51,9 +50,9 @@ GLuint generateTexture()
   // glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, tex_w, tex_h, tex_d, 0, GL_RGBA, GL_FLOAT,
+  glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, tex_w, tex_h, tex_d, 0, GL_RGBA, GL_FLOAT,
       NULL);
-  glBindImageTexture(1, tex_output, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+  glBindImageTexture(1, tex_output, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
 
   Gloom::Shader* compShader;
   compShader = new Gloom::Shader();

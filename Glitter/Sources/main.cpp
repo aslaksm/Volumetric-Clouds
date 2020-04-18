@@ -83,15 +83,19 @@ int main(int argc, char * argv[]) {
     float t = 0.0;
 
     float x = 0.0;
-    float y = 0.0;
+    float y = -20000.0;
     float z = 0.0;
-    float height = 3400.0;
+    float height = 10000.0;
     bool coverage_only = false;
     float look_y = 0.0;
     float trans = 1.0;
     float scat = 1.0;
-    int num_steps = 5;
+    int num_steps = 20;
     float light_step_size = 100.f;
+    
+    float scale_cov = 3.0;
+    float scale_base = 3.0;
+    float scale_detail = 3.0;
 
     float pass_time = false;
 
@@ -100,6 +104,11 @@ int main(int argc, char * argv[]) {
     while (glfwWindowShouldClose(mWindow) == false) {
         if (glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(mWindow, true);
+
+        // int xpos, ypos;
+        // glfwGetCursorPos(mWindow, &xpos, &ypos);
+        // glfwSetCursorPos(mWindow, 1024/2, 768/2);
+
 
         // Set viewport and get resolution
         int windowWidth, windowHeight;
@@ -124,6 +133,7 @@ int main(int argc, char * argv[]) {
         glUniform1f(10, scat);
         glUniform1i(11, num_steps);
         glUniform1f(12, light_step_size);
+        glUniform3fv(13, 1, glm::value_ptr(glm::vec3(scale_cov, scale_base, scale_detail)));
 
         glDrawElements(GL_TRIANGLES, clouds.indices.size(), GL_UNSIGNED_INT, nullptr);
 
@@ -142,12 +152,15 @@ int main(int argc, char * argv[]) {
         }
 
         ImGui::SliderFloat("X", &x, -1000.0f, 1000.0f);
-        ImGui::SliderFloat("Y", &y, -10000.0f, 10000.0f);
+        ImGui::SliderFloat("Y", &y, -100000.0f, 10000.0f);
         ImGui::SliderFloat("Z", &z, -1000.0f, 1000.0f);
+        ImGui::SliderFloat("Scale coverage", &scale_cov, 0.01f, 10.0f);
+        ImGui::SliderFloat("Scale base", &scale_base, 0.01f, 10.0f);
+        ImGui::SliderFloat("Scale detail", &scale_detail, 0.01f, 10.0f);
         ImGui::SliderFloat("Max Height", &height, 0.0f, 10000.0f);
         ImGui::Checkbox("Coverage only", &coverage_only);
-        ImGui::SliderFloat("Transmittance", &trans, 0.0f, 2.0f);
-        ImGui::SliderFloat("Scattering", &scat, 0.0f, 2.0f);
+        ImGui::SliderFloat("Transmittance", &trans, 0.0f, 10.0f);
+        ImGui::SliderFloat("Scattering", &scat, 0.0f, 3.0f);
         ImGui::SliderInt("Num steps", &num_steps, 1, 100);
         ImGui::SliderFloat("Lightmarch step size", &light_step_size, 5.f, 500.f);
         ImGui::End();
