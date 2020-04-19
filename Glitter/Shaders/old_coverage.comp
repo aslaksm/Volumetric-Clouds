@@ -62,9 +62,9 @@ void main() {
   
   float one = max(0, cnoise(pixel_coord/8. + 30)*0.5);
   float two = max(0, cnoise(pixel_coord/16. + 30)*0.5);
-  // float three = max(0, cnoise(pixel_coord/4.)*0.25);
-  // float four = max(0, cnoise(pixel_coord)*0.125);
-  float simplex1 = clamp(one, 0.0, 1.0);
+  float three = max(0, cnoise(pixel_coord/4.)*0.25);
+  float four = max(0, cnoise(pixel_coord)*0.125);
+  float simplex1 = clamp(one+two+three+four, 0.0, 0.8);
   float n = simplex1;
 
   imageStore(img_output, ivec2(pixel_coord), vec4(vec3(n), 1.0)) ;

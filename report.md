@@ -19,7 +19,7 @@ I encountered a lot of problems underway. In the beginning, I expected the base 
 
 [Insert video of layering clouds]
 
-I managed to get decent results by adding a random offset in the range [0, STEP_SIZE], but this introduced serious noise artifacts. I ended up using a Bayer Filter to calculate the offset, an approach I saw used in various implementations. This results noticeable artifacts, in particular when using a low number of steps. For steps > 20 however, the artifacts are negligible.
+I managed to get decent results by adding a random offset in the range [0, STEP_SIZE], but this introduced serious noise artifacts. I ended up using a Bayer Filter to calculate the offset, an approach I saw used by Nadir\cite and enScape\cite. This results in noticeable artifacts, in particular when using a low number of steps. For steps > 20 however, the artifacts are less visible.
 
 Since the clouds are far above the origin, I needed some way of calculating where the beginning and end of the skybox should be. I ended up calculating two sphere intersections, one for the inner cloud shell and one for the outer. The sphere origin is set to be the center of the earth, with the assumption that the origin is placed on the ground. This intersection is calculated for every raymarch. This approach also effectively mimics the effect of clouds vanishing into the horizon. In order avoid rendering clouds below the horizon, we only render clouds when the view-ray is positive in the y-direction.
 
@@ -53,3 +53,6 @@ Refinements
 I did a lot of tooling around with the noies. However, at some point I had to implement tiling Perlin noise: At this point I was pretty tired of the project, so I just used Sebastien Hillare's TilableVolumeNoise.
 
 Fixing coverage and base noise.
+
+
+I experimented with a lot of different lighting models. The basics are described above.

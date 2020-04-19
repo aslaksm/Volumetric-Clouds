@@ -7,7 +7,6 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-#include <btBulletDynamicsCommon.h>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -18,13 +17,13 @@
 #include <stb_image.h>
 
 // Define Some Constants
-const int mWidth = 512;
-const int mHeight = 512;
+// const int mWidth = 512;
+// const int mHeight = 512;
 // const int mWidth = 640;
 // const int mHeight = 480;
 // const int mWidth = 1280;
 // const int mHeight = 720;
-// const int mWidth = 1920;
-// const int mHeight = 1080;
+const int mWidth = 1920;
+const int mHeight = 1080;
 
 #endif //~ Glitter Header

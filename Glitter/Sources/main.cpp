@@ -108,17 +108,18 @@ int main(int argc, char * argv[]) {
     float x = 0.0;
     float y = 0.0;
     float z = 0.0;
-    float height = 10000.0;
+    float height = 40000.0;
     bool coverage_only = false;
     float look_y = 0.0;
-    float trans = 1.0;
-    float scat = 0.11;
+    float trans = 1.3;
+    float light_trans = 0.5;
+    float scat = 1.0;
     int num_steps = 20;
-    float light_step_size = 100.f;
+    float light_step_size = 1800.f;
     
-    float scale_cov = 3.0;
-    float scale_base = 3.0;
-    float scale_detail = 3.0;
+    float scale_cov = 8.5;
+    float scale_base = 10.0;
+    float scale_detail = 1.4;
 
     float pass_time = false;
 
@@ -135,11 +136,13 @@ int main(int argc, char * argv[]) {
             glfwSetWindowShouldClose(mWindow, true);
 
         if (glfwGetKey(mWindow, GLFW_KEY_M) == GLFW_PRESS)
-            menu_mode = !menu_mode;
+            menu_mode = true;
+        if (glfwGetKey(mWindow, GLFW_KEY_N) == GLFW_PRESS)
+            menu_mode = false;
         if (glfwGetKey(mWindow, GLFW_KEY_E) == GLFW_PRESS)
-            y += 100;
-        if (glfwGetKey(mWindow, GLFW_KEY_Q) == GLFW_PRESS)
             y -= 100;
+        if (glfwGetKey(mWindow, GLFW_KEY_Q) == GLFW_PRESS)
+            y += 100;
         if (glfwGetKey(mWindow, GLFW_KEY_A) == GLFW_PRESS)
             x -= 100;
         if (glfwGetKey(mWindow, GLFW_KEY_D) == GLFW_PRESS)
@@ -190,6 +193,7 @@ int main(int argc, char * argv[]) {
         glUniform1f(12, light_step_size);
         glUniform3fv(13, 1, glm::value_ptr(glm::vec3(scale_cov, scale_base, scale_detail)));
         glUniform2fv(14, 1, glm::value_ptr(glm::vec2(X, Y)));
+        glUniform1f(15, light_trans);
 
         glDrawElements(GL_TRIANGLES, clouds.indices.size(), GL_UNSIGNED_INT, nullptr);
 
@@ -213,12 +217,13 @@ int main(int argc, char * argv[]) {
         ImGui::SliderFloat("Scale coverage", &scale_cov, 0.01f, 10.0f);
         ImGui::SliderFloat("Scale base", &scale_base, 0.01f, 10.0f);
         ImGui::SliderFloat("Scale detail", &scale_detail, 0.01f, 10.0f);
-        ImGui::SliderFloat("Max Height", &height, 0.0f, 10000.0f);
+        ImGui::SliderFloat("Max Height", &height, 0.0f, 40000.0f);
         ImGui::Checkbox("Coverage only", &coverage_only);
         ImGui::SliderFloat("Transmittance", &trans, 0.0f, 10.0f);
+        ImGui::SliderFloat("Light Transmittance", &light_trans, 0.0f, 10.0f);
         ImGui::SliderFloat("Scattering", &scat, 0.0f, 3.0f);
         ImGui::SliderInt("Num steps", &num_steps, 1, 100);
-        ImGui::SliderFloat("Lightmarch step size", &light_step_size, 5.f, 500.f);
+        ImGui::SliderFloat("Lightmarch step size", &light_step_size, 5.f, 5000.f);
         ImGui::End();
 
         // Render imgui into screen
